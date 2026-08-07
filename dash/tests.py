@@ -30,6 +30,13 @@ class DarajaPayloadTests(SimpleTestCase):
         )
 
         self.assertEqual(payload["BusinessShortCode"], "654321")
+        self.assertEqual(payload["TransactionType"], "CustomerPayBillOnline")
+        self.assertEqual(payload["Amount"], 3000)
+        self.assertEqual(payload["PartyA"], "254711000111")
+        self.assertEqual(payload["PartyB"], "654321")
+        self.assertEqual(payload["PhoneNumber"], "254711000111")
         self.assertEqual(payload["AccountReference"], "DASH-HR-77")
+        self.assertEqual(payload["TransactionDesc"], "Dash consultant consultation")
+        self.assertEqual(payload["Environment"], "sandbox")
         self.assertEqual(payload["CallBackURL"], "https://dash.example.com/payments/mpesa/callback/")
         self.assertEqual(payload["Gateway"], "Flutterwave")

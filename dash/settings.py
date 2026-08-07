@@ -14,7 +14,6 @@ import os
 import secrets
 from pathlib import Path
 from decouple import config
-from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,9 +27,6 @@ SECRET_KEY = config("SECRET_KEY", default=secrets.token_urlsafe(50))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
-
-if not SECRET_KEY:
-    raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")
 
 ALLOWED_HOSTS = [
     host.strip()
