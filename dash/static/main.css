@@ -1,0 +1,282 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: #111b21;
+    color: #e9edef;
+}
+
+h1,
+h2,
+p,
+dl {
+    margin-top: 0;
+}
+
+.app-shell {
+    min-height: 100vh;
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: minmax(320px, 420px) minmax(320px, 1fr);
+    padding: 1.5rem;
+    background:
+        radial-gradient(circle at top left, rgba(37, 211, 102, 0.12), transparent 24%),
+        linear-gradient(180deg, #111b21 0%, #0b141a 100%);
+}
+
+.marketing-panel,
+.chat-shell {
+    border-radius: 1.75rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(17, 27, 33, 0.88);
+    box-shadow: 0 28px 60px rgba(0, 0, 0, 0.28);
+}
+
+.marketing-panel {
+    padding: 2rem;
+}
+
+.eyebrow {
+    margin-bottom: 0.75rem;
+    color: #25d366;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.78rem;
+}
+
+h1 {
+    font-size: clamp(2.2rem, 4vw, 3.5rem);
+    line-height: 1.05;
+    margin-bottom: 1rem;
+}
+
+.subheadline {
+    color: #c9d1d5;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+}
+
+.feature-list {
+    display: grid;
+    gap: 0.9rem;
+    margin-bottom: 1.75rem;
+}
+
+.feature-chip {
+    padding: 1rem 1.1rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.04);
+    color: #d8e1e5;
+}
+
+.payments-card {
+    padding: 1.5rem;
+    border-radius: 1.25rem;
+    background: #0b141a;
+}
+
+.card-heading,
+.thread-header,
+.chat-name-row,
+.composer-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(37, 211, 102, 0.12);
+    color: #7bf0aa;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.payment-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 0;
+}
+
+.payment-grid dt,
+.thread-subtitle,
+.chat-list-item span,
+.chat-list-item p,
+.message-bubble span,
+.composer p {
+    color: #9fb0b8;
+}
+
+.payment-grid dd {
+    margin: 0.35rem 0 0;
+    color: #f5f7f8;
+    word-break: break-word;
+}
+
+.payment-grid-wide {
+    grid-column: 1 / -1;
+}
+
+.chat-shell {
+    display: grid;
+    grid-template-columns: minmax(240px, 320px) 1fr;
+    min-height: 720px;
+}
+
+.chat-sidebar {
+    background: #111b21;
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.sidebar-header,
+.thread-header,
+.composer {
+    padding: 1.25rem;
+}
+
+.sidebar-header {
+    background: #202c33;
+}
+
+.sidebar-header h2,
+.thread-title {
+    margin-bottom: 0.3rem;
+}
+
+.sidebar-header p,
+.thread-subtitle {
+    margin-bottom: 0;
+}
+
+.chat-list {
+    display: grid;
+}
+
+.chat-list-item {
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    gap: 0.9rem;
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.chat-list-item.active {
+    background: rgba(37, 211, 102, 0.08);
+}
+
+.avatar {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #25d366;
+    color: #0b141a;
+    font-weight: 700;
+}
+
+.chat-meta p {
+    margin-bottom: 0;
+}
+
+.chat-thread {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    background:
+        linear-gradient(rgba(11, 20, 26, 0.9), rgba(11, 20, 26, 0.9)),
+        radial-gradient(circle at top left, rgba(37, 211, 102, 0.08), transparent 20%);
+}
+
+.thread-header {
+    background: #202c33;
+}
+
+.status-live {
+    background: rgba(37, 211, 102, 0.16);
+}
+
+.messages {
+    display: grid;
+    gap: 1rem;
+    padding: 1.5rem;
+    align-content: start;
+}
+
+.message-bubble {
+    max-width: min(75%, 34rem);
+    padding: 0.9rem 1rem;
+    border-radius: 1rem;
+}
+
+.message-bubble.consultant {
+    justify-self: end;
+    background: #005c4b;
+}
+
+.message-bubble.client {
+    background: #202c33;
+}
+
+.message-bubble p {
+    margin-bottom: 0.4rem;
+    line-height: 1.55;
+}
+
+.message-bubble span {
+    display: block;
+    text-align: right;
+    font-size: 0.8rem;
+}
+
+.composer {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: #202c33;
+}
+
+.composer p {
+    margin-bottom: 1rem;
+}
+
+.composer-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 999px;
+    background: #25d366;
+    color: #0b141a;
+    font-weight: 700;
+}
+
+.composer-pill-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e9edef;
+}
+
+@media (max-width: 1100px) {
+    .app-shell {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .chat-shell,
+    .payment-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card-heading,
+    .thread-header,
+    .composer-actions {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

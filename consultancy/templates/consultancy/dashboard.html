@@ -1,0 +1,90 @@
+{% extends "consultancy/base.html" %}
+{% block title %}Dashboard – Dash{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-[#111b21]">
+  <!-- Nav -->
+  <nav class="bg-[#202c33] border-b border-white/5 px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 bg-[#25d366] rounded-full flex items-center justify-center font-bold text-[#111b21]">
+        {{ profile.display_name|slice:":1"|upper }}
+      </div>
+      <div>
+        <p class="font-semibold text-sm">{{ profile.display_name }}</p>
+        <p class="text-xs text-[#8696a0]">/{{ profile.slug }}</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4 text-sm">
+      <span class="text-[#8696a0]">KES {{ profile.wallet_balance|floatformat:2 }}</span>
+      {% if profile.subscription_is_active %}
+        <span class="bg-[#25d366]/20 text-[#7bf0aa] text-xs px-2 py-0.5 rounded-full">Active</span>
+      {% else %}
+        <span class="bg-red-500/20 text-red-300 text-xs px-2 py-0.5 rounded-full">Inactive</span>
+      {% endif %}
+      <a href="{% url 'consultancy:logout' %}" class="text-[#8696a0] hover:text-[#e9edef]">Sign out</a>
+    </div>
+  </nav>
+
+  <div class="max-w-4xl mx-auto px-6 py-8">
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-4 mb-8">
+      <div class="bg-[#202c33] rounded-xl p-4">
+        <p class="text-xs text-[#8696a0]">Total sessions</p>
+        <p class="text-2xl font-bold text-[#e9edef] mt-1">{{ sessions|length }}</p>
+      </div>
+      <div class="bg-[#202c33] rounded-xl p-4">
+        <p class="text-xs text-[#8696a0]">Wallet balance</p>
+        <p class="text-2xl font-bold text-[#25d366] mt-1">KES {{ profile.wallet_balance|floatformat:2 }}</p>
+      </div>
+      <div class="bg-[#202c33] rounded-xl p-4">
+        <p class="text-xs text-[#8696a0]">Public link</p>
+        <p class="text-sm text-[#25d366] mt-1 truncate">/{{ profile.slug }}/</p>
+      </div>
+    </div>
+
+    <!-- Sessions table -->
+    <div class="bg-[#202c33] rounded-xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-white/5">
+        <h2 class="font-semibold text-[#e9edef]">Client Sessions</h2>
+      </div>
+      {% if sessions %}
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-[#8696a0] text-xs border-b border-white/5">
+              <th class="text-left px-5 py-3 font-medium">Client</th>
+              <th class="text-left px-5 py-3 font-medium">Started</th>
+              <th class="text-left px-5 py-3 font-medium">Paid</th>
+              <th class="text-left px-5 py-3 font-medium">Messages</th>
+              <th class="px-5 py-3"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in sessions %}
+            <tr class="border-b border-white/5 hover:bg-white/[0.02]">
+              <td class="px-5 py-3 font-medium">{{ s.client_display_name }}</td>
+              <td class="px-5 py-3 text-[#8696a0]">{{ s.created_at|date:"M d, H:i" }}</td>
+              <td class="px-5 py-3">
+                {% if s.is_paid %}
+                  <span class="text-[#25d366]">✓ Paid</span>
+                {% else %}
+                  <span class="text-[#8696a0]">Pending</span>
+                {% endif %}
+              </td>
+              <td class="px-5 py-3 text-[#8696a0]">{{ s.messages.count }}</td>
+              <td class="px-5 py-3">
+                <a href="{% url 'consultancy:consultant_chat' s.id %}"
+                   class="text-[#25d366] hover:underline text-xs">Open →</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="px-5 py-12 text-center text-[#8696a0]">
+          <p class="text-4xl mb-3">💬</p>
+          <p>No client sessions yet. Share your link: <strong>/{{ profile.slug }}/</strong></p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

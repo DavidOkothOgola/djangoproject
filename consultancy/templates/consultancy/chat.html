@@ -1,0 +1,499 @@
+{% extends "consultancy/base.html" %}
+{% block title %}{{ tenant.display_name }} – Dash{% endblock %}
+{% block content %}
+<!-- ═══════════════════════════════════════════════════════════
+     DASH CHAT – WhatsApp Web–style layout
+     Variables from context:
+       tenant, session, messages, ws_url, sender_id, is_consultant
+     ═══════════════════════════════════════════════════════════ -->
+<div id="app" class="h-screen flex flex-col overflow-hidden">
+
+  <!-- ── Top bar ── -->
+  <header class="bg-[#202c33] flex items-center gap-3 px-4 py-2.5 border-b border-white/5 shrink-0">
+    <div class="w-9 h-9 bg-[#25d366] rounded-full flex items-center justify-center font-bold text-[#111b21] text-sm">
+      {{ tenant.display_name|slice:":1"|upper }}
+    </div>
+    <div class="flex-1 min-w-0">
+      <p class="font-semibold text-sm truncate">{{ tenant.display_name }}</p>
+      <p id="sub-status" class="text-xs text-[#8696a0]">
+        {% if session.is_paid %}Consultation active{% else %}Awaiting payment{% endif %}
+      </p>
+    </div>
+    <div class="flex items-center gap-3 text-[#8696a0]">
+      {% if is_consultant %}
+        <a href="{% url 'consultancy:dashboard' %}" class="text-xs hover:text-[#e9edef]">← Dashboard</a>
+      {% else %}
+        <!-- Payment trigger button for unpaid clients -->
+        {% if not session.is_paid %}
+        <button id="pay-btn" onclick="openPayModal()"
+                class="bg-[#25d366] text-[#111b21] font-bold text-xs px-3 py-1.5 rounded-full hover:bg-[#1fb059] transition">
+          Pay via M-Pesa
+        </button>
+        {% endif %}
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- ── Messages ── -->
+  <div id="messages-container"
+       class="flex-1 overflow-y-auto px-4 py-4 space-y-1"
+       style="background: #0b141a url('data:image/svg+xml,...') repeat;">
+    {% for msg in messages %}
+      {% include "consultancy/_message_bubble.html" with msg=msg sender_id=sender_id %}
+    {% endfor %}
+    <div id="typing-indicator" class="hidden">
+      <div class="inline-flex items-center gap-1 bg-[#202c33] px-3 py-2 rounded-2xl rounded-bl-sm">
+        <span class="w-1.5 h-1.5 bg-[#8696a0] rounded-full animate-bounce"></span>
+        <span class="w-1.5 h-1.5 bg-[#8696a0] rounded-full animate-bounce [animation-delay:.1s]"></span>
+        <span class="w-1.5 h-1.5 bg-[#8696a0] rounded-full animate-bounce [animation-delay:.2s]"></span>
+        <span class="text-xs text-[#8696a0] ml-1" id="typing-label">typing…</span>
+      </div>
+    </div>
+    <div id="scroll-anchor"></div>
+  </div>
+
+  <!-- ── Composer ── -->
+  <div class="bg-[#202c33] border-t border-white/5 px-3 py-3 shrink-0">
+    <!-- Quote bar (hidden by default) -->
+    <div id="quote-bar" class="hidden bg-[#2a3942] rounded-lg px-3 py-2 mb-2 flex items-start gap-2">
+      <div class="w-1 bg-[#25d366] self-stretch rounded-full shrink-0"></div>
+      <div class="flex-1 min-w-0">
+        <p class="text-xs text-[#25d366] font-semibold" id="quote-author"></p>
+        <p class="text-xs text-[#8696a0] truncate" id="quote-text"></p>
+      </div>
+      <button onclick="clearReply()" class="text-[#8696a0] hover:text-[#e9edef] text-lg leading-none">×</button>
+    </div>
+
+    <div class="flex items-end gap-2">
+      <!-- Emoji picker trigger -->
+      <button id="emoji-btn" onclick="toggleEmojiPicker()"
+              class="text-[#8696a0] hover:text-[#e9edef] text-xl shrink-0 pb-1.5">☺</button>
+
+      <!-- Text input -->
+      <div class="flex-1 bg-[#2a3942] rounded-2xl px-4 py-2.5 flex items-end min-h-[44px]">
+        <textarea id="msg-input" rows="1" placeholder="Type a message"
+                  class="w-full bg-transparent text-[#e9edef] text-sm resize-none focus:outline-none placeholder-[#8696a0] max-h-32 overflow-y-auto"
+                  oninput="autoResize(this); sendTyping(true)"
+                  onblur="sendTyping(false)"
+                  onkeydown="handleKeyDown(event)"></textarea>
+      </div>
+
+      <!-- Voice note / send -->
+      <button id="voice-btn" onclick="toggleVoice()"
+              class="w-11 h-11 bg-[#25d366] rounded-full flex items-center justify-center text-[#111b21] shrink-0 hover:bg-[#1fb059] transition"
+              title="Hold to record">
+        <svg id="mic-icon" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/>
+        </svg>
+        <svg id="send-icon" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/>
+        </svg>
+      </button>
+
+      <!-- File upload -->
+      <label class="w-11 h-11 bg-[#2a3942] rounded-full flex items-center justify-center text-[#8696a0] cursor-pointer hover:text-[#e9edef] transition shrink-0" title="Attach image">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"/>
+        </svg>
+        <input type="file" accept="image/*" class="hidden" onchange="uploadFile(event, 'image')">
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     M-PESA PAYMENT MODAL
+     ══════════════════════════════════════ -->
+<div id="pay-modal"
+     class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden px-4">
+  <div class="bg-[#202c33] rounded-2xl shadow-2xl w-full max-w-sm p-6">
+    <h2 class="text-lg font-bold text-[#e9edef] mb-1">Pay via M-Pesa</h2>
+    <p class="text-xs text-[#8696a0] mb-4">Enter your Safaricom number to receive an STK push.</p>
+    <input type="tel" id="mpesa-phone" placeholder="e.g. 0712345678"
+           class="w-full bg-[#2a3942] text-[#e9edef] rounded-lg px-4 py-3 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-[#25d366]">
+    <p id="pay-status" class="text-xs text-[#8696a0] mb-3 hidden"></p>
+    <div class="flex gap-3">
+      <button onclick="closePayModal()"
+              class="flex-1 bg-[#2a3942] text-[#8696a0] font-semibold rounded-full py-2.5 text-sm hover:bg-[#374045] transition">
+        Cancel
+      </button>
+      <button onclick="initiatePayment()"
+              class="flex-1 bg-[#25d366] text-[#111b21] font-bold rounded-full py-2.5 text-sm hover:bg-[#1fb059] transition">
+        Send STK Push
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     EMOJI PICKER (simple)
+     ══════════════════════════════════════ -->
+<div id="emoji-picker"
+     class="fixed bottom-20 left-4 bg-[#202c33] rounded-2xl shadow-2xl p-3 grid grid-cols-8 gap-1 z-40 hidden">
+  {% for e in "😀😂🥹😍🤔👍👏🙏💯🔥❤️🎉😊🤣😭😅🤦‍♂️✅🚀💡😎🙌🤝💬📞🕐💰✨🌟" %}
+    <button class="text-xl hover:bg-white/10 rounded p-0.5" onclick="insertEmoji('{{ e }}')">{{ e }}</button>
+  {% endfor %}
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ════════════════════════════════════════════════════════════ -->
+<script>
+// ── Constants injected from Django context ──
+const SESSION_ID    = "{{ session.id }}";
+const SENDER_ID     = "{{ sender_id }}";
+const IS_CONSULTANT = {{ is_consultant|yesno:"true,false" }};
+const IS_PAID       = {{ session.is_paid|yesno:"true,false" }};
+const WS_URL        = "{{ ws_url }}";
+const STK_URL       = "{% url 'consultancy:stk_push' session.id %}";
+const STATUS_URL    = "{% url 'consultancy:payment_status' session.id %}";
+const UPLOAD_URL    = "{% url 'consultancy:media_upload' session.id %}";
+const CSRF_TOKEN    = "{{ csrf_token }}";
+
+// ── State ──
+let socket        = null;
+let replyToId     = null;
+let replyToText   = null;
+let replyToAuthor = null;
+let isRecording   = false;
+let mediaRecorder = null;
+let audioChunks   = [];
+let typingTimeout = null;
+
+// ── WebSocket setup ──
+function connectWS() {
+  socket = new WebSocket(WS_URL);
+
+  socket.onopen = () => {
+    socket.send(JSON.stringify({ type: "join_room", sender_id: SENDER_ID }));
+    socket.send(JSON.stringify({ type: "message_read", reader_id: SENDER_ID }));
+  };
+
+  socket.onmessage = (evt) => {
+    const data = JSON.parse(evt.data);
+    switch (data.type) {
+      case "room_history":
+        data.messages.forEach(m => appendBubble(m));
+        scrollToBottom();
+        break;
+      case "chat_message":
+        appendBubble(data);
+        scrollToBottom();
+        // Auto-read when visible
+        if (data.sender_id !== SENDER_ID) {
+          socket.send(JSON.stringify({ type: "message_read", reader_id: SENDER_ID }));
+        }
+        break;
+      case "typing_broadcast":
+        if (data.sender_id !== SENDER_ID) showTyping(data.is_typing, data.sender_id);
+        break;
+      case "read_receipt":
+        handleReadReceipt(data.status);
+        break;
+      case "error":
+        console.warn("WS error:", data.message);
+        break;
+    }
+  };
+
+  socket.onclose = () => {
+    setTimeout(connectWS, 3000); // auto-reconnect
+  };
+}
+
+// ── Send a text message ──
+function sendMessage() {
+  const input = document.getElementById("msg-input");
+  const text = input.value.trim();
+  if (!text) return;
+
+  if (!IS_PAID && !IS_CONSULTANT) {
+    openPayModal();
+    return;
+  }
+
+  socket.send(JSON.stringify({
+    type: "send_message",
+    sender_id: SENDER_ID,
+    is_from_consultant: IS_CONSULTANT,
+    msg_type: "text",
+    content: text,
+    reply_to_id: replyToId || null,
+  }));
+
+  input.value = "";
+  input.style.height = "auto";
+  clearReply();
+  showSendIcon(false);
+}
+
+// ── Key handler ──
+function handleKeyDown(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+// ── Typing indicator ──
+function sendTyping(isTyping) {
+  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+  if (isTyping) {
+    showSendIcon(true);
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => sendTyping(false), 2500);
+  }
+  socket.send(JSON.stringify({ type: "typing_state", sender_id: SENDER_ID, is_typing: isTyping }));
+}
+
+function showTyping(show, who) {
+  const el = document.getElementById("typing-indicator");
+  const label = document.getElementById("typing-label");
+  if (show) {
+    label.textContent = `${who} is typing…`;
+    el.classList.remove("hidden");
+  } else {
+    el.classList.add("hidden");
+  }
+}
+
+// ── Read receipts / tick updates ──
+function handleReadReceipt(status) {
+  document.querySelectorAll(".tick").forEach(el => {
+    if (status === "read") el.className = "tick text-[#53bdeb]";
+    else if (status === "delivered") el.className = "tick text-[#8696a0]";
+  });
+}
+
+// ── Append bubble to DOM ──
+function appendBubble(msg) {
+  const container = document.getElementById("messages-container");
+  const anchor    = document.getElementById("scroll-anchor");
+  const isOurs    = msg.sender_id === SENDER_ID;
+  const side      = isOurs ? "items-end" : "items-start";
+  const bubbleCss = isOurs
+    ? "bg-[#005c4b] text-[#e9edef] rounded-2xl rounded-br-sm"
+    : "bg-[#202c33] text-[#e9edef] rounded-2xl rounded-bl-sm";
+
+  const tickHtml = isOurs ? `<span class="tick ${tickClass(msg.status)} text-xs ml-1">${tickChars(msg.status)}</span>` : "";
+
+  let bodyHtml = "";
+  if (msg.msg_type === "audio" || msg.type === "audio") {
+    bodyHtml = `<audio controls src="${msg.media_url}" class="max-w-[220px]"></audio>`;
+  } else if (msg.msg_type === "image" || msg.type === "image") {
+    bodyHtml = `<img src="${msg.media_url}" alt="Image" class="max-w-[220px] rounded-lg">`;
+  } else {
+    bodyHtml = `<p class="text-sm leading-relaxed whitespace-pre-wrap">${escHtml(msg.content || "")}</p>`;
+  }
+
+  let replyHtml = "";
+  if (msg.reply_to_id) {
+    replyHtml = `<div class="bg-[#1a2a2e] rounded-lg px-2 py-1 mb-1 border-l-2 border-[#25d366] text-xs text-[#8696a0]">↩ Quoted message</div>`;
+  }
+
+  const el = document.createElement("div");
+  el.className = `flex flex-col ${side}`;
+  el.dataset.msgId = msg.id;
+  el.innerHTML = `
+    <div class="${bubbleCss} px-3 pt-2 pb-1.5 max-w-[75%] shadow-sm cursor-pointer"
+         onclick="setReply('${msg.id}', '${escAttr(msg.sender_id)}', '${escAttr(msg.content || "")}')" >
+      ${replyHtml}
+      <p class="text-[11px] font-semibold text-[#25d366] mb-0.5">${escHtml(msg.sender_id)}</p>
+      ${bodyHtml}
+      <div class="flex items-center justify-end gap-1 mt-0.5">
+        <span class="text-[10px] text-[#8696a0]">${msg.created_at || ""}</span>
+        ${tickHtml}
+      </div>
+    </div>`;
+
+  container.insertBefore(el, anchor);
+}
+
+function tickClass(status) {
+  if (status === "read") return "text-[#53bdeb]";
+  return "text-[#8696a0]";
+}
+
+function tickChars(status) {
+  if (status === "sent") return "✓";
+  if (status === "delivered") return "✓✓";
+  if (status === "read") return "✓✓";
+  return "✓";
+}
+
+// ── Reply quoting ──
+function setReply(id, author, text) {
+  replyToId     = id;
+  replyToAuthor = author;
+  replyToText   = text;
+  document.getElementById("quote-bar").classList.remove("hidden");
+  document.getElementById("quote-author").textContent = author;
+  document.getElementById("quote-text").textContent   = text.slice(0, 100);
+  document.getElementById("msg-input").focus();
+}
+
+function clearReply() {
+  replyToId = replyToAuthor = replyToText = null;
+  document.getElementById("quote-bar").classList.add("hidden");
+}
+
+// ── Voice recording ──
+async function toggleVoice() {
+  const input = document.getElementById("msg-input");
+  if (input.value.trim()) { sendMessage(); return; }
+
+  if (!isRecording) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunks = [];
+      mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = () => uploadAudio(stream);
+      mediaRecorder.start();
+      isRecording = true;
+      document.getElementById("voice-btn").classList.add("bg-red-500");
+      document.getElementById("voice-btn").classList.remove("bg-[#25d366]");
+    } catch (err) {
+      alert("Microphone access denied.");
+    }
+  } else {
+    mediaRecorder.stop();
+    isRecording = false;
+    document.getElementById("voice-btn").classList.remove("bg-red-500");
+    document.getElementById("voice-btn").classList.add("bg-[#25d366]");
+  }
+}
+
+async function uploadAudio(stream) {
+  stream.getTracks().forEach(t => t.stop());
+  const blob = new Blob(audioChunks, { type: "audio/webm" });
+  const fd   = new FormData();
+  fd.append("file", blob, "voice.webm");
+  const res  = await fetch(UPLOAD_URL, { method: "POST", headers: { "X-CSRFToken": CSRF_TOKEN }, body: fd });
+  const data = await res.json();
+  if (data.success) {
+    socket.send(JSON.stringify({
+      type: "send_message",
+      sender_id: SENDER_ID,
+      is_from_consultant: IS_CONSULTANT,
+      msg_type: "audio",
+      content: "",
+      media_url: data.url,
+      reply_to_id: replyToId || null,
+    }));
+  }
+}
+
+// ── Image upload ──
+async function uploadFile(event, fileType) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append("file", file);
+  const res  = await fetch(UPLOAD_URL, { method: "POST", headers: { "X-CSRFToken": CSRF_TOKEN }, body: fd });
+  const data = await res.json();
+  if (data.success) {
+    socket.send(JSON.stringify({
+      type: "send_message",
+      sender_id: SENDER_ID,
+      is_from_consultant: IS_CONSULTANT,
+      msg_type: fileType,
+      content: "",
+      media_url: data.url,
+      reply_to_id: replyToId || null,
+    }));
+  }
+}
+
+// ── M-Pesa modal ──
+function openPayModal() {
+  document.getElementById("pay-modal").classList.remove("hidden");
+}
+function closePayModal() {
+  document.getElementById("pay-modal").classList.add("hidden");
+  document.getElementById("pay-status").classList.add("hidden");
+}
+
+async function initiatePayment() {
+  const phone = document.getElementById("mpesa-phone").value.trim();
+  const statusEl = document.getElementById("pay-status");
+  if (!phone) { statusEl.textContent = "Enter phone number."; statusEl.classList.remove("hidden"); return; }
+
+  statusEl.textContent = "Sending STK push…";
+  statusEl.classList.remove("hidden");
+
+  const fd = new FormData();
+  fd.append("phone_number", phone);
+
+  const res  = await fetch(STK_URL, { method: "POST", headers: { "X-CSRFToken": CSRF_TOKEN }, body: fd });
+  const data = await res.json();
+
+  if (data.success) {
+    statusEl.textContent = data.message;
+    // Poll for payment confirmation
+    pollPaymentStatus(data.checkout_request_id);
+  } else {
+    statusEl.textContent = data.error || "Payment failed.";
+  }
+}
+
+async function pollPaymentStatus(checkoutId) {
+  for (let i = 0; i < 18; i++) {
+    await new Promise(r => setTimeout(r, 5000));
+    const res  = await fetch(STATUS_URL).catch(() => null);
+    if (!res) continue;
+    const data = await res.json().catch(() => ({}));
+    if (data.is_paid) {
+      document.getElementById("sub-status").textContent = "Consultation active";
+      document.getElementById("pay-btn")?.remove();
+      closePayModal();
+      return;
+    }
+  }
+}
+
+// ── Emoji picker ──
+function toggleEmojiPicker() {
+  document.getElementById("emoji-picker").classList.toggle("hidden");
+}
+function insertEmoji(emoji) {
+  const input = document.getElementById("msg-input");
+  input.value += emoji;
+  input.focus();
+  document.getElementById("emoji-picker").classList.add("hidden");
+  showSendIcon(true);
+}
+
+// ── UI helpers ──
+function autoResize(el) {
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 128) + "px";
+}
+
+function showSendIcon(show) {
+  document.getElementById("send-icon").classList.toggle("hidden", !show);
+  document.getElementById("mic-icon").classList.toggle("hidden", show);
+}
+
+function scrollToBottom() {
+  document.getElementById("scroll-anchor").scrollIntoView({ behavior: "smooth" });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function escAttr(s) {
+  return String(s).replace(/'/g,"\\'").replace(/\n/g," ");
+}
+
+// Close emoji picker on outside click
+document.addEventListener("click", e => {
+  if (!e.target.closest("#emoji-picker") && !e.target.closest("#emoji-btn"))
+    document.getElementById("emoji-picker")?.classList.add("hidden");
+});
+
+// ── Init ──
+connectWS();
+scrollToBottom();
+</script>
+{% endblock %}
