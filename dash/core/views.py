@@ -62,6 +62,5 @@ def index(request):
             "phone_number": daraja_payload["PhoneNumber"],
             "transaction_type": daraja_payload["TransactionType"],
         },
-        "daraja_payload": daraja_payload,
     }
     return render(request, "index.html", context)

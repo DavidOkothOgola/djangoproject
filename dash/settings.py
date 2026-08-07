@@ -24,16 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config("SECRET_KEY", default="")
+SECRET_KEY = config("SECRET_KEY", default=secrets.token_urlsafe(50))
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config("DEBUG", default=True)
+DEBUG = config("DEBUG", default=False, cast=bool)
 
 if not SECRET_KEY:
-    if DEBUG:
-        SECRET_KEY = secrets.token_urlsafe(50)
-    else:
-        raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")
+    raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")
 
 ALLOWED_HOSTS = [
     host.strip()
@@ -69,7 +66,7 @@ MIDDLEWARE = [
     "django_browser_reload.middleware.BrowserReloadMiddleware",
 ]
 
-X_FRAME_OPTIONS = "ALLOW-FROM preview.app.github.dev"
+X_FRAME_OPTIONS = "SAMEORIGIN"
 
 ROOT_URLCONF = "dash.urls"
 
