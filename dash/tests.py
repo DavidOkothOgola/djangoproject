@@ -4,6 +4,12 @@ from django.urls import reverse
 from dash.core.services import build_daraja_checkout_payload
 
 
+@override_settings(
+    DARAJA_ENVIRONMENT="sandbox",
+    DARAJA_SHORTCODE="174379",
+    DARAJA_CALLBACK_URL="https://dash.example.com/payments/mpesa/callback/",
+    PAYMENT_GATEWAY_NAME="Stripe",
+)
 class DashLandingPageTests(SimpleTestCase):
     def test_homepage_promotes_dash_chat_and_mpesa_daraja(self):
         response = self.client.get(reverse("home"))
