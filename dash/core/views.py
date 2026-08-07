@@ -29,9 +29,9 @@ def index(request):
         ],
     }
     daraja_payload = build_daraja_checkout_payload(
-        session_reference="DASH-LEGAL-2048",
-        amount=2250,
-        phone_number="254700123456",
+        session_reference=settings.DARAJA_DEMO_SESSION_REFERENCE,
+        amount=settings.DARAJA_DEMO_AMOUNT,
+        phone_number=settings.DARAJA_DEMO_PHONE_NUMBER,
     )
     context = {
         "title": "Dash",

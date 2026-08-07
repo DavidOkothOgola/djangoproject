@@ -26,10 +26,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 DEBUG = config("DEBUG", default=False, cast=bool)
-SECRET_KEY = config("SECRET_KEY", default="")
+SECRET_KEY = config("SECRET_KEY", default=None)
 
-if not SECRET_KEY:
-    if any(command in sys.argv for command in {"test", "check", "shell"}):
+if SECRET_KEY is None:
+    if DEBUG or any(command in sys.argv for command in {"test", "check", "shell", "migrate", "collectstatic"}):
         SECRET_KEY = secrets.token_urlsafe(50)
     else:
         raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")
@@ -154,6 +154,9 @@ DARAJA_CALLBACK_URL = config(
     default="https://example.com/payments/mpesa/callback/",
 )
 PAYMENT_GATEWAY_NAME = config("PAYMENT_GATEWAY_NAME", default="Stripe")
+DARAJA_DEMO_SESSION_REFERENCE = config("DARAJA_DEMO_SESSION_REFERENCE", default="DASH-LEGAL-2048")
+DARAJA_DEMO_AMOUNT = config("DARAJA_DEMO_AMOUNT", default=2250, cast=int)
+DARAJA_DEMO_PHONE_NUMBER = config("DARAJA_DEMO_PHONE_NUMBER", default="254700123456")
 
 
 # Default primary key field type

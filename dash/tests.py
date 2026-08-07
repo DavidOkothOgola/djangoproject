@@ -9,6 +9,9 @@ from dash.core.services import build_daraja_checkout_payload
     DARAJA_SHORTCODE="174379",
     DARAJA_CALLBACK_URL="https://dash.example.com/payments/mpesa/callback/",
     PAYMENT_GATEWAY_NAME="Stripe",
+    DARAJA_DEMO_SESSION_REFERENCE="DASH-DEMO-100",
+    DARAJA_DEMO_AMOUNT=2250,
+    DARAJA_DEMO_PHONE_NUMBER="254700123456",
 )
 class DashLandingPageTests(SimpleTestCase):
     def test_homepage_promotes_dash_chat_and_mpesa_daraja(self):

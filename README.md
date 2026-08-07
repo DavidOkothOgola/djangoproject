@@ -25,6 +25,9 @@ Copy `.env.example` to `.env` and set your payment values:
 - `DARAJA_PASSKEY`
 - `DARAJA_CALLBACK_URL`
 - `PAYMENT_GATEWAY_NAME`
+- `DARAJA_DEMO_SESSION_REFERENCE`
+- `DARAJA_DEMO_AMOUNT`
+- `DARAJA_DEMO_PHONE_NUMBER`
 
 ## Run the application
 
