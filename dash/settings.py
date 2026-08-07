@@ -27,9 +27,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 DEBUG = config("DEBUG", default=False, cast=bool)
 SECRET_KEY = config("SECRET_KEY", default=None)
+MANAGEMENT_COMMAND = sys.argv[1] if len(sys.argv) > 1 else ""
+SAFE_LOCAL_COMMANDS = {"test", "check", "shell", "migrate", "collectstatic"}
 
 if SECRET_KEY is None:
-    if DEBUG or any(command in sys.argv for command in {"test", "check", "shell", "migrate", "collectstatic"}):
+    if DEBUG or MANAGEMENT_COMMAND in SAFE_LOCAL_COMMANDS:
         SECRET_KEY = secrets.token_urlsafe(50)
     else:
         raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")
@@ -148,7 +150,7 @@ MEDIA_ROOT = BASE_DIR / "dash" / "media"
 
 DARAJA_ENVIRONMENT = config("DARAJA_ENVIRONMENT", default="sandbox")
 DARAJA_SHORTCODE = config("DARAJA_SHORTCODE", default="174379")
-DARAJA_PASSKEY = config("DARAJA_PASSKEY", default="")
+DARAJA_PASSKEY = config("DARAJA_PASSKEY", default=None)
 DARAJA_CALLBACK_URL = config(
     "DARAJA_CALLBACK_URL",
     default="https://example.com/payments/mpesa/callback/",
@@ -157,6 +159,9 @@ PAYMENT_GATEWAY_NAME = config("PAYMENT_GATEWAY_NAME", default="Stripe")
 DARAJA_DEMO_SESSION_REFERENCE = config("DARAJA_DEMO_SESSION_REFERENCE", default="DASH-LEGAL-2048")
 DARAJA_DEMO_AMOUNT = config("DARAJA_DEMO_AMOUNT", default=2250, cast=int)
 DARAJA_DEMO_PHONE_NUMBER = config("DARAJA_DEMO_PHONE_NUMBER", default="254700123456")
+
+if DARAJA_PASSKEY is None and not DEBUG and MANAGEMENT_COMMAND not in SAFE_LOCAL_COMMANDS:
+    raise ImproperlyConfigured("The DARAJA_PASSKEY setting must not be empty.")
 
 
 # Default primary key field type

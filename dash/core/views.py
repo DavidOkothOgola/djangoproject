@@ -63,4 +63,4 @@ def index(request):
             "transaction_type": daraja_payload["TransactionType"],
         },
     }
-    return render(request, "index.html", context)
+    return render(request, "dash/index.html", context)
