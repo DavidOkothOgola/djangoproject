@@ -29,6 +29,8 @@ Copy `.env.example` to `.env` and set your payment values:
 - `DARAJA_DEMO_AMOUNT`
 - `DARAJA_DEMO_PHONE_NUMBER`
 
+For local development commands such as `runserver`, `migrate`, `check`, and tests, Dash can generate an ephemeral secret key when one is not supplied, but you should still set a stable `SECRET_KEY` in `.env` for normal development.
+
 ## Run the application
 
 ```bash

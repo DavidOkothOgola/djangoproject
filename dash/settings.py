@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = config("DEBUG", default=False, cast=bool)
 SECRET_KEY = config("SECRET_KEY", default=None)
 MANAGEMENT_COMMAND = sys.argv[1] if len(sys.argv) > 1 else ""
-SAFE_LOCAL_COMMANDS = {"test", "check", "shell", "migrate", "collectstatic"}
+SAFE_LOCAL_COMMANDS = {"test", "check", "shell", "migrate", "collectstatic", "runserver"}
 
 if SECRET_KEY is None:
     if DEBUG or MANAGEMENT_COMMAND in SAFE_LOCAL_COMMANDS:
