@@ -14,6 +14,12 @@ pip install -r requirements.txt
 python manage.py runserver
 ```
 
+## Collect static files
+
+```bash
+python manage.py collectstatic
+```
+
 ## Run targeted tests
 
 ```bash

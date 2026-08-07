@@ -11,8 +11,10 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 """
 
 import os
+import secrets
 from pathlib import Path
 from decouple import config
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,10 +24,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config("SECRET_KEY", default="dev-secret-key")
+SECRET_KEY = config("SECRET_KEY", default="")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=True)
+
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = secrets.token_urlsafe(50)
+    else:
+        raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")
 
 ALLOWED_HOSTS = [
     host.strip()
