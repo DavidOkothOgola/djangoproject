@@ -1,12 +1,29 @@
 # Dash
 
-Dash is a Django-based consultant chat experience focused on paid consultations. The landing page highlights timed chat sessions, M-Pesa collections, and support for an additional payment gateway for broader client billing.
+Dash is a Django project for consultant conversations with a WhatsApp-style chat experience and M-Pesa Daraja payment wiring.
+
+## Features
+
+- Dash-branded Django project package
+- WhatsApp-inspired consultant inbox and active chat thread
+- M-Pesa Daraja checkout payload wiring for consultation billing
+- Secondary payment gateway configuration for non-M-Pesa clients
 
 ## Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
+
+## Configure environment
+
+Copy `.env.example` to `.env` and set your payment values:
+
+- `DARAJA_ENVIRONMENT`
+- `DARAJA_SHORTCODE`
+- `DARAJA_PASSKEY`
+- `DARAJA_CALLBACK_URL`
+- `PAYMENT_GATEWAY_NAME`
 
 ## Run the application
 
@@ -23,5 +40,5 @@ python manage.py collectstatic
 ## Run targeted tests
 
 ```bash
-python manage.py test hello_world.tests
+python manage.py test dash.tests
 ```

@@ -1,0 +1,120 @@
+{% load django_browser_reload %}
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Dash is a WhatsApp-style consultant chat with M-Pesa Daraja billing">
+    <meta name="author" content="Dash">
+    <meta name="theme-color" content="#0b141a">
+    <title>{% block title %}{{ title }} | Consultant chat and M-Pesa Daraja{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'main.css' %}">
+</head>
+<body>
+    <main class="app-shell">
+        <section class="marketing-panel">
+            <p class="eyebrow">Dash</p>
+            <h1>{{ headline }}</h1>
+            <p class="subheadline">{{ subheadline }}</p>
+
+            <div class="feature-list">
+                {% for feature in product_features %}
+                    <article class="feature-chip">{{ feature }}</article>
+                {% endfor %}
+            </div>
+
+            <section class="payments-card">
+                <div class="card-heading">
+                    <div>
+                        <p class="eyebrow">Payments</p>
+                        <h2>Daraja checkout wiring</h2>
+                    </div>
+                    <span class="status-badge">{{ payment_summary.daraja_environment }}</span>
+                </div>
+                <dl class="payment-grid">
+                    <div>
+                        <dt>Shortcode</dt>
+                        <dd>{{ payment_summary.shortcode }}</dd>
+                    </div>
+                    <div>
+                        <dt>Gateway</dt>
+                        <dd>{{ payment_summary.gateway_name }}</dd>
+                    </div>
+                    <div>
+                        <dt>Session ref</dt>
+                        <dd>{{ payment_summary.session_reference }}</dd>
+                    </div>
+                    <div>
+                        <dt>Phone</dt>
+                        <dd>{{ payment_summary.phone_number }}</dd>
+                    </div>
+                    <div class="payment-grid-wide">
+                        <dt>Callback URL</dt>
+                        <dd>{{ payment_summary.callback_url }}</dd>
+                    </div>
+                    <div>
+                        <dt>Amount</dt>
+                        <dd>KES {{ payment_summary.amount }}</dd>
+                    </div>
+                    <div>
+                        <dt>Transaction type</dt>
+                        <dd>{{ payment_summary.transaction_type }}</dd>
+                    </div>
+                </dl>
+            </section>
+        </section>
+
+        <section class="chat-shell" aria-label="Dash chat preview">
+            <aside class="chat-sidebar">
+                <div class="sidebar-header">
+                    <h2>Chats</h2>
+                    <p>Consultant inbox</p>
+                </div>
+                <div class="chat-list">
+                    {% for chat in sidebar_chats %}
+                        <article class="chat-list-item{% if chat.active %} active{% endif %}">
+                            <div class="avatar">{{ chat.name|slice:":1" }}</div>
+                            <div class="chat-meta">
+                                <div class="chat-name-row">
+                                    <strong>{{ chat.name }}</strong>
+                                    <span>{{ chat.time }}</span>
+                                </div>
+                                <p>{{ chat.snippet }}</p>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            </aside>
+
+            <section class="chat-thread">
+                <header class="thread-header">
+                    <div>
+                        <p class="thread-title">{{ active_session.consultant }}</p>
+                        <p class="thread-subtitle">{{ active_session.specialty }} · {{ active_session.rate }}</p>
+                    </div>
+                    <span class="status-badge status-live">{{ active_session.status }}</span>
+                </header>
+
+                <div class="messages">
+                    {% for message in active_session.messages %}
+                        <article class="message-bubble {{ message.author }}">
+                            <p>{{ message.text }}</p>
+                            <span>{{ message.time }}</span>
+                        </article>
+                    {% endfor %}
+                </div>
+
+                <footer class="composer">
+                    <p>Type secure consultation notes, share files, or trigger a payment reminder from the chat.</p>
+                    <div class="composer-actions">
+                        <span class="composer-pill">Request M-Pesa deposit</span>
+                        <span class="composer-pill composer-pill-secondary">Open {{ payment_summary.gateway_name }} link</span>
+                    </div>
+                </footer>
+            </section>
+        </section>
+    </main>
+</body>
+</html>
