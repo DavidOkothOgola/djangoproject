@@ -29,7 +29,7 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 SECRET_KEY = config("SECRET_KEY", default="")
 
 if not SECRET_KEY:
-    if DEBUG or any(command in sys.argv for command in {"test", "check", "shell"}):
+    if any(command in sys.argv for command in {"test", "check", "shell"}):
         SECRET_KEY = secrets.token_urlsafe(50)
     else:
         raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")

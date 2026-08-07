@@ -19,6 +19,7 @@ pip install -r requirements.txt
 
 Copy `.env.example` to `.env` and set your payment values:
 
+- `SECRET_KEY`
 - `DARAJA_ENVIRONMENT`
 - `DARAJA_SHORTCODE`
 - `DARAJA_PASSKEY`
