@@ -22,6 +22,10 @@ class DashLandingPageTests(SimpleTestCase):
         self.assertContains(response, "M-Pesa Daraja")
         self.assertContains(response, "Consultant inbox")
         self.assertContains(response, "Request M-Pesa deposit")
+        self.assertContains(response, "174379")
+        self.assertContains(response, "https://dash.example.com/payments/mpesa/callback/")
+        self.assertContains(response, "DASH-DEMO-100")
+        self.assertContains(response, "KES 2250")
 
 
 class DarajaPayloadTests(SimpleTestCase):

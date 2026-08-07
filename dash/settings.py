@@ -27,11 +27,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 DEBUG = config("DEBUG", default=False, cast=bool)
 SECRET_KEY = config("SECRET_KEY", default=None)
-MANAGEMENT_COMMAND = sys.argv[1] if len(sys.argv) > 1 else ""
-SAFE_LOCAL_COMMANDS = {"test", "check", "shell", "migrate", "collectstatic", "runserver"}
+
+
+def is_safe_local_command():
+    safe_local_commands = {"test", "check", "shell", "migrate", "collectstatic", "runserver"}
+    return len(sys.argv) > 1 and sys.argv[1] in safe_local_commands
 
 if SECRET_KEY is None:
-    if DEBUG or MANAGEMENT_COMMAND in SAFE_LOCAL_COMMANDS:
+    if DEBUG or is_safe_local_command():
         SECRET_KEY = secrets.token_urlsafe(50)
     else:
         raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")
@@ -160,7 +163,7 @@ DARAJA_DEMO_SESSION_REFERENCE = config("DARAJA_DEMO_SESSION_REFERENCE", default=
 DARAJA_DEMO_AMOUNT = config("DARAJA_DEMO_AMOUNT", default=2250, cast=int)
 DARAJA_DEMO_PHONE_NUMBER = config("DARAJA_DEMO_PHONE_NUMBER", default="254700123456")
 
-if DARAJA_PASSKEY is None and not DEBUG and MANAGEMENT_COMMAND not in SAFE_LOCAL_COMMANDS:
+if DARAJA_PASSKEY is None and not DEBUG and not is_safe_local_command():
     raise ImproperlyConfigured("The DARAJA_PASSKEY setting must not be empty.")
 
 
