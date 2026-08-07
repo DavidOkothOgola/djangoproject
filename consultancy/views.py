@@ -1,13 +1,11 @@
-import secrets
 import logging
 import json
+import secrets
 
-import requests
 from django.conf import settings
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth.models import User
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.http import JsonResponse
@@ -16,11 +14,10 @@ from django.utils.text import slugify
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+from dash.core.services import get_daraja_access_token, daraja_stk_push
 from .models import ChatSession, Message, MpesaTransaction, TenantProfile
 
 logger = logging.getLogger(__name__)
-
-PLATFORM_FEE = 20  # KES flat fee per transaction
 
 
 # ─────────────────────────────────────────────
@@ -145,56 +142,6 @@ def consultant_chat(request, session_id):
 # M-Pesa / Daraja
 # ─────────────────────────────────────────────
 
-def _daraja_access_token():
-    env = settings.DARAJA_ENVIRONMENT
-    base = "https://sandbox.safaricom.co.ke" if env == "sandbox" else "https://api.safaricom.co.ke"
-    resp = requests.get(
-        f"{base}/oauth/v1/generate?grant_type=client_credentials",
-        auth=(settings.DARAJA_CONSUMER_KEY, settings.DARAJA_CONSUMER_SECRET),
-        timeout=15,
-    )
-    resp.raise_for_status()
-    return resp.json()["access_token"]
-
-
-def _daraja_stk_push(access_token, phone_number, amount, account_ref, description):
-    import base64
-    from datetime import datetime
-
-    env = settings.DARAJA_ENVIRONMENT
-    base = "https://sandbox.safaricom.co.ke" if env == "sandbox" else "https://api.safaricom.co.ke"
-    shortcode = settings.DARAJA_SHORTCODE
-    passkey = settings.DARAJA_PASSKEY
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    password = base64.b64encode(f"{shortcode}{passkey}{timestamp}".encode()).decode()
-
-    payload = {
-        "BusinessShortCode": shortcode,
-        "Password": password,
-        "Timestamp": timestamp,
-        "TransactionType": "CustomerPayBillOnline",
-        "Amount": int(amount),
-        "PartyA": phone_number,
-        "PartyB": shortcode,
-        "PhoneNumber": phone_number,
-        "CallBackURL": settings.DARAJA_CALLBACK_URL,
-        "AccountReference": account_ref,
-        "TransactionDesc": description,
-    }
-    headers = {
-        "Authorization": "Bearer " + access_token,
-        "Content-Type": "application/json",
-    }
-    resp = requests.post(
-        f"{base}/mpesa/stkpush/v1/processrequest",
-        json=payload,
-        headers=headers,
-        timeout=15,
-    )
-    resp.raise_for_status()
-    return resp.json()
-
-
 @require_POST
 def stk_push_initiate(request, session_id):
     session = get_object_or_404(ChatSession, id=session_id)
@@ -203,10 +150,11 @@ def stk_push_initiate(request, session_id):
         return JsonResponse({"success": False, "error": "Phone number required."}, status=400)
 
     amount = session.tenant.hourly_rate or 100
+    platform_fee = settings.PLATFORM_TRANSACTION_FEE
 
     try:
-        token = _daraja_access_token()
-        result = _daraja_stk_push(
+        token = get_daraja_access_token()
+        result = daraja_stk_push(
             access_token=token,
             phone_number=phone_number,
             amount=amount,
@@ -223,7 +171,7 @@ def stk_push_initiate(request, session_id):
             status=400,
         )
 
-    net = float(amount) - PLATFORM_FEE
+    net = float(amount) - platform_fee
     MpesaTransaction.objects.create(
         tenant=session.tenant,
         chat_session=session,
@@ -231,7 +179,7 @@ def stk_push_initiate(request, session_id):
         checkout_request_id=result["CheckoutRequestID"],
         phone_number=phone_number,
         amount_gross=amount,
-        platform_fee=PLATFORM_FEE,
+        platform_fee=platform_fee,
         amount_net=max(net, 0),
         status=MpesaTransaction.TransactionStatus.PENDING,
     )

@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "django_browser_reload",
     "channels",
     "storages",
+    "dash.core",
     "consultancy",
 ]
 
@@ -205,6 +206,8 @@ DARAJA_CONSUMER_SECRET = config("DARAJA_CONSUMER_SECRET", default="")
 
 # Subscription fee
 PLATFORM_SUBSCRIPTION_FEE = config("PLATFORM_SUBSCRIPTION_FEE", default=400, cast=int)
+# Flat per-transaction fee deducted from each M-Pesa payment
+PLATFORM_TRANSACTION_FEE = config("PLATFORM_TRANSACTION_FEE", default=20, cast=int)
 
 # S3 / Cloudflare R2 media storage (optional)
 USE_S3 = config("USE_S3", default=False, cast=bool)
