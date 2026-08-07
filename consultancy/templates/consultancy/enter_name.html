@@ -1,0 +1,25 @@
+{% extends "consultancy/base.html" %}
+{% block title %}Join {{ tenant.display_name }} – Dash{% endblock %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-[#111b21] px-4">
+  <div class="w-full max-w-sm bg-[#202c33] rounded-2xl shadow-2xl p-8 text-center">
+    <div class="w-16 h-16 bg-[#25d366] rounded-full flex items-center justify-center text-2xl font-bold text-[#111b21] mx-auto mb-4">
+      {{ tenant.display_name|slice:":1"|upper }}
+    </div>
+    <h1 class="text-xl font-bold text-[#e9edef] mb-1">{{ tenant.display_name }}</h1>
+    <p class="text-sm text-[#8696a0] mb-6">Enter your name to start the consultation</p>
+    {% if error %}
+      <p class="text-red-400 text-sm mb-3">{{ error }}</p>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="text" name="display_name" placeholder="Your name" autofocus
+             class="w-full bg-[#2a3942] text-[#e9edef] rounded-lg px-4 py-3 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-[#25d366]">
+      <button type="submit"
+              class="w-full bg-[#25d366] hover:bg-[#1fb059] text-[#111b21] font-bold rounded-full py-2.5 transition">
+        Start Consultation
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% load static %}
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Dash{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { color-scheme: dark; }
+    body { background: #111b21; color: #e9edef; }
+    .tick-sent    { color: #8696a0; }
+    .tick-delivered { color: #8696a0; }
+    .tick-read    { color: #53bdeb; }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #374045; border-radius: 3px; }
+  </style>
+</head>
+<body class="h-full font-sans">
+  {% block content %}{% endblock %}
+</body>
+</html>

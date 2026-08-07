@@ -1,0 +1,11 @@
+{% extends "consultancy/base.html" %}
+{% block title %}Consultant Unavailable – Dash{% endblock %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-[#111b21] px-4">
+  <div class="text-center">
+    <p class="text-5xl mb-4">🔒</p>
+    <h1 class="text-xl font-bold text-[#e9edef] mb-2">Consultant Unavailable</h1>
+    <p class="text-[#8696a0] text-sm">{{ tenant.display_name }}'s consultation service is currently inactive.</p>
+  </div>
+</div>
+{% endblock %}

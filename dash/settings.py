@@ -60,6 +60,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_browser_reload",
+    "channels",
+    "storages",
+    "consultancy",
 ]
 
 MIDDLEWARE = [
@@ -94,17 +97,41 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "dash.wsgi.application"
+ASGI_APPLICATION = "dash.asgi.application"
+
+# Django Channels – Redis channel layer (falls back to in-memory for dev/tests)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": config(
+            "CHANNEL_LAYER_BACKEND",
+            default="channels.layers.InMemoryChannelLayer",
+        ),
+        "CONFIG": {
+            "hosts": [config("REDIS_URL", default="redis://localhost:6379")],
+        }
+        if config("CHANNEL_LAYER_BACKEND", default="") == "channels_redis.core.RedisChannelLayer"
+        else {},
+    }
+}
 
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+DATABASE_URL = config("DATABASE_URL", default=None)
+if DATABASE_URL:
+    try:
+        import dj_database_url  # type: ignore[import]
+        DATABASES = {"default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)}
+    except ImportError:
+        DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
 
 
 # Password validation
@@ -171,3 +198,31 @@ if DARAJA_PASSKEY is None and not DEBUG and not is_safe_local_command():
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Daraja consumer credentials
+DARAJA_CONSUMER_KEY = config("DARAJA_CONSUMER_KEY", default="")
+DARAJA_CONSUMER_SECRET = config("DARAJA_CONSUMER_SECRET", default="")
+
+# Subscription fee
+PLATFORM_SUBSCRIPTION_FEE = config("PLATFORM_SUBSCRIPTION_FEE", default=400, cast=int)
+
+# S3 / Cloudflare R2 media storage (optional)
+USE_S3 = config("USE_S3", default=False, cast=bool)
+if USE_S3:
+    AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME")
+    AWS_S3_ENDPOINT_URL = config("AWS_S3_ENDPOINT_URL", default=None)
+    AWS_S3_CUSTOM_DOMAIN = config("AWS_S3_CUSTOM_DOMAIN", default=None)
+    STORAGES = {
+        "default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+    if AWS_S3_CUSTOM_DOMAIN:
+        MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+
+
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/dashboard/"
+LOGOUT_REDIRECT_URL = "/login/"
+
